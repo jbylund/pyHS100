@@ -6,7 +6,8 @@ import time
 from typing import Dict
 import os
 import sys
-sys.path.append(os.path.expanduser("~/Desktop/lights/pyHS100"))
+dirname = os.path.dirname(__file__)
+sys.path.append(dirname)
 
 from pyHS100 import TPLinkSmartHomeProtocol, SmartDevice, SmartPlug, SmartBulb
 
