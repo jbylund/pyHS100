@@ -1,6 +1,6 @@
 from __future__ import division
 from __future__ import absolute_import
-from pyHS100 import SmartDevice
+from tplink import SmartDevice
 from typing import Any, Dict, Optional, Tuple
 
 

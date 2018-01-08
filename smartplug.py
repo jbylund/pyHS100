@@ -3,7 +3,7 @@ import datetime
 import logging
 from typing import Any, Dict
 
-from pyHS100 import SmartDevice
+from tplink import SmartDevice
 
 _LOGGER = logging.getLogger(__name__)
 

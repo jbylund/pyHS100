@@ -9,7 +9,7 @@ import sys
 dirname = os.path.dirname(__file__)
 sys.path.append(dirname)
 
-from pyHS100 import TPLinkSmartHomeProtocol, SmartDevice, SmartPlug, SmartBulb
+from tplink import TPLinkSmartHomeProtocol, SmartDevice, SmartPlug, SmartBulb
 
 _LOGGER = logging.getLogger(__name__)
 
