@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 import socket
 import struct
@@ -7,8 +8,8 @@ from typing import Any, Dict, Union
 _LOGGER = logging.getLogger(__name__)
 
 
-class TPLinkSmartHomeProtocol:
-    """
+class TPLinkSmartHomeProtocol(object):
+    u"""
     Implementation of the TP-Link Smart Home Protocol
 
     Encryption/Decryption methods based on the works of
@@ -25,10 +26,10 @@ class TPLinkSmartHomeProtocol:
     DEFAULT_TIMEOUT = 5
 
     @staticmethod
-    def query(host: str,
-              request: Union[str, Dict],
-              port: int = DEFAULT_PORT) -> Any:
-        """
+    def query(host,
+              request,
+              port=DEFAULT_PORT):
+        u"""
         Request information from a TP-Link SmartHome Device and return the
         response.
 
@@ -46,10 +47,10 @@ class TPLinkSmartHomeProtocol:
         try:
             sock.connect((host, port))
 
-            _LOGGER.debug("> (%i) %s", len(request), request)
+            _LOGGER.debug(u"> (%i) %s", len(request), request)
             sock.send(TPLinkSmartHomeProtocol.encrypt(request))
 
-            buffer = bytes()
+            buffer = str()
             # Some devices send responses with a length header of 0 and
             # terminate with a zero size chunk. Others send the length and
             # will hang if we attempt to read more data.
@@ -57,7 +58,7 @@ class TPLinkSmartHomeProtocol:
             while True:
                 chunk = sock.recv(4096)
                 if length == -1:
-                    length = struct.unpack(">I", chunk[0:4])[0]
+                    length = struct.unpack(u">I", chunk[0:4])[0]
                 buffer += chunk
                 if (length > 0 and len(buffer) >= length + 4) or not chunk:
                     break
@@ -74,20 +75,20 @@ class TPLinkSmartHomeProtocol:
                 sock.close()
 
         response = TPLinkSmartHomeProtocol.decrypt(buffer[4:])
-        _LOGGER.debug("< (%i) %s", len(response), response)
+        _LOGGER.debug(u"< (%i) %s", len(response), response)
 
         return json.loads(response)
 
     @staticmethod
-    def encrypt(request: str) -> bytearray:
-        """
+    def encrypt(request):
+        u"""
         Encrypt a request for a TP-Link Smart Home Device.
 
         :param request: plaintext request data
         :return: ciphertext request
         """
         key = TPLinkSmartHomeProtocol.INITIALIZATION_VECTOR
-        buffer = bytearray(struct.pack(">I", len(request)))
+        buffer = bytearray(struct.pack(u">I", len(request)))
 
         for char in request:
             cipher = key ^ ord(char)
@@ -97,8 +98,8 @@ class TPLinkSmartHomeProtocol:
         return buffer
 
     @staticmethod
-    def decrypt(ciphertext: bytes) -> str:
-        """
+    def decrypt(ciphertext):
+        u"""
         Decrypt a response of a TP-Link Smart Home Device.
 
         :param ciphertext: encrypted response data
@@ -107,13 +108,13 @@ class TPLinkSmartHomeProtocol:
         key = TPLinkSmartHomeProtocol.INITIALIZATION_VECTOR
         buffer = []
 
-        ciphertext_str = ciphertext.decode('latin-1')
+        ciphertext_str = ciphertext.decode(u'latin-1')
 
         for char in ciphertext_str:
             plain = key ^ ord(char)
             key = ord(char)
-            buffer.append(chr(plain))
+            buffer.append(unichr(plain))
 
-        plaintext = ''.join(buffer)
+        plaintext = u''.join(buffer)
 
         return plaintext

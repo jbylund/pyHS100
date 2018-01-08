@@ -1,4 +1,4 @@
-"""
+u"""
 This module provides a way to interface with TP-Link's smart home devices,
 such as smart plugs (HS1xx), wall switches (HS2xx), and light bulbs (LB1xx).
 
@@ -13,6 +13,7 @@ Module-specific errors are raised as `SmartDeviceException` and are expected
 to be handled by the user of the library.
 """
 # flake8: noqa
+from __future__ import absolute_import
 from .smartdevice import SmartDevice, SmartDeviceException
 from .smartplug import SmartPlug
 from .smartbulb import SmartBulb

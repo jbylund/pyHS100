@@ -1,4 +1,4 @@
-"""
+u"""
 pyHS100
 Python library supporting TP-Link Smart Plugs/Switches (HS100/HS110/Hs200).
 
@@ -13,6 +13,7 @@ Stroetmann which is licensed under the Apache License, Version 2.0.
 You may obtain a copy of the license at
 http://www.apache.org/licenses/LICENSE-2.0
 """
+from __future__ import absolute_import
 import datetime
 import logging
 import socket
@@ -26,7 +27,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class SmartDeviceException(Exception):
-    """
+    u"""
     SmartDeviceException gets raised for errors reported by device.
     """
     pass
@@ -34,15 +35,15 @@ class SmartDeviceException(Exception):
 
 class SmartDevice(object):
     # possible device features
-    FEATURE_ENERGY_METER = 'ENE'
-    FEATURE_TIMER = 'TIM'
+    FEATURE_ENERGY_METER = u'ENE'
+    FEATURE_TIMER = u'TIM'
 
     ALL_FEATURES = (FEATURE_ENERGY_METER, FEATURE_TIMER)
 
     def __init__(self,
-                 ip_address: str,
-                 protocol: Optional[TPLinkSmartHomeProtocol] = None) -> None:
-        """
+                 ip_address,
+                 protocol=None):
+        u"""
         Create a new SmartDevice instance, identified through its IP address.
 
         :param str ip_address: ip address on which the device listens
@@ -52,14 +53,14 @@ class SmartDevice(object):
         if not protocol:
             protocol = TPLinkSmartHomeProtocol()
         self.protocol = protocol
-        self.emeter_type = "emeter"  # type: str
+        self.emeter_type = u"emeter"  # type: str
         self.emeter_units = False
 
     def _query_helper(self,
-                      target: str,
-                      cmd: str,
-                      arg: Optional[Dict] = None) -> Any:
-        """
+                      target,
+                      cmd,
+                      arg=None):
+        u"""
         Helper returning unwrapped result object and doing error handling.
 
         :param target: Target system {system, time, emeter, ..}
@@ -76,54 +77,54 @@ class SmartDevice(object):
                 host=self.ip_address,
                 request={target: {cmd: arg}}
             )
-        except Exception as ex:
-            raise SmartDeviceException('Communication error') from ex
+        except Exception, ex:
+            raise SmartDeviceException(u'Communication error')
 
         if target not in response:
-            raise SmartDeviceException("No required {} in response: {}"
+            raise SmartDeviceException(u"No required {} in response: {}"
                                        .format(target, response))
 
         result = response[target]
-        if "err_code" in result and result["err_code"] != 0:
-            raise SmartDeviceException("Error on {}.{}: {}"
+        if u"err_code" in result and result[u"err_code"] != 0:
+            raise SmartDeviceException(u"Error on {}.{}: {}"
                                        .format(target, cmd, result))
 
         result = result[cmd]
-        del result["err_code"]
+        del result[u"err_code"]
 
         return result
 
     @property
-    def features(self) -> List[str]:
-        """
+    def features(self):
+        u"""
         Returns features of the devices
 
         :return: list of features
         :rtype: list
         """
-        warnings.simplefilter('always', DeprecationWarning)
+        warnings.simplefilter(u'always', DeprecationWarning)
         warnings.warn(
-            "features works only on plugs and its use is discouraged, "
-            "and it will likely to be removed at some point",
+            u"features works only on plugs and its use is discouraged, "
+            u"and it will likely to be removed at some point",
             DeprecationWarning,
             stacklevel=2
         )
-        warnings.simplefilter('default', DeprecationWarning)
-        if "feature" not in self.sys_info:
+        warnings.simplefilter(u'default', DeprecationWarning)
+        if u"feature" not in self.sys_info:
             return []
 
-        features = self.sys_info['feature'].split(':')
+        features = self.sys_info[u'feature'].split(u':')
 
         for feature in features:
             if feature not in SmartDevice.ALL_FEATURES:
-                _LOGGER.warning("Unknown feature %s on device %s.",
+                _LOGGER.warning(u"Unknown feature %s on device %s.",
                                 feature, self.model)
 
         return features
 
     @property
-    def has_emeter(self) -> bool:
-        """
+    def has_emeter(self):
+        u"""
         Checks feature list for energy meter support.
         Note: this has to be implemented on a device specific class.
 
@@ -133,8 +134,8 @@ class SmartDevice(object):
         raise NotImplementedError()
 
     @property
-    def sys_info(self) -> Dict[str, Any]:
-        """
+    def sys_info(self):
+        u"""
         Returns the complete system information from the device.
 
         :return: System information dict.
@@ -142,71 +143,71 @@ class SmartDevice(object):
         """
         return defaultdict(lambda: None, self.get_sysinfo())
 
-    def get_sysinfo(self) -> Dict:
-        """
+    def get_sysinfo(self):
+        u"""
         Retrieve system information.
 
         :return: sysinfo
         :rtype dict
         :raises SmartDeviceException: on error
         """
-        return self._query_helper("system", "get_sysinfo")
+        return self._query_helper(u"system", u"get_sysinfo")
 
-    def identify(self) -> Tuple[str, str, Any]:
-        """
+    def identify(self):
+        u"""
         Query device information to identify model and featureset
 
         :return: (alias, model, list of supported features)
         :rtype: tuple
         """
-        warnings.simplefilter('always', DeprecationWarning)
+        warnings.simplefilter(u'always', DeprecationWarning)
         warnings.warn(
-            "use alias and model instead of idenfity()",
+            u"use alias and model instead of idenfity()",
             DeprecationWarning,
             stacklevel=2
         )
-        warnings.simplefilter('default', DeprecationWarning)
+        warnings.simplefilter(u'default', DeprecationWarning)
 
         info = self.sys_info
 
         #  TODO sysinfo parsing should happen in sys_info
         #  to avoid calling fetch here twice..
-        return info["alias"], info["model"], self.features
+        return info[u"alias"], info[u"model"], self.features
 
     @property
-    def model(self) -> str:
-        """
+    def model(self):
+        u"""
         Get model of the device
 
         :return: device model
         :rtype: str
         :raises SmartDeviceException: on error
         """
-        return str(self.sys_info['model'])
+        return unicode(self.sys_info[u'model'])
 
     @property
-    def alias(self) -> str:
-        """
+    def alias(self):
+        u"""
         Get current device alias (name)
 
         :return: Device name aka alias.
         :rtype: str
         """
-        return str(self.sys_info['alias'])
+        return unicode(self.sys_info[u'alias'])
 
     @alias.setter
-    def alias(self, alias: str) -> None:
-        """
+    def alias(self, alias):
+        u"""
         Sets the device name aka alias.
 
         :param alias: New alias (name)
         :raises SmartDeviceException: on error
         """
-        self._query_helper("system", "set_dev_alias", {"alias": alias})
+        self._query_helper(u"system", u"set_dev_alias", {u"alias": alias})
 
     @property
-    def icon(self) -> Dict:
-        """
+    def icon(self):
+        u"""
         Returns device icon
 
         Note: not working on HS110, but is always empty.
@@ -215,11 +216,11 @@ class SmartDevice(object):
         :rtype: dict
         :raises SmartDeviceException: on error
         """
-        return self._query_helper("system", "get_dev_icon")
+        return self._query_helper(u"system", u"get_dev_icon")
 
     @icon.setter
-    def icon(self, icon: str) -> None:
-        """
+    def icon(self, icon):
+        u"""
         Content for hash and icon are unknown.
 
         :param str icon: Icon path(?)
@@ -233,8 +234,8 @@ class SmartDevice(object):
         # self.initialize()
 
     @property
-    def time(self) -> Optional[datetime.datetime]:
-        """
+    def time(self):
+        u"""
         Returns current time from the device.
 
         :return: datetime for device's time
@@ -242,15 +243,15 @@ class SmartDevice(object):
         :raises SmartDeviceException: on error
         """
         try:
-            res = self._query_helper("time", "get_time")
-            return datetime.datetime(res["year"], res["month"], res["mday"],
-                                     res["hour"], res["min"], res["sec"])
+            res = self._query_helper(u"time", u"get_time")
+            return datetime.datetime(res[u"year"], res[u"month"], res[u"mday"],
+                                     res[u"hour"], res[u"min"], res[u"sec"])
         except SmartDeviceException:
             return None
 
     @time.setter
-    def time(self, ts: datetime.datetime) -> None:
-        """
+    def time(self, ts):
+        u"""
         Sets time based on datetime object.
         Note: this calls set_timezone() for setting.
 
@@ -260,8 +261,8 @@ class SmartDevice(object):
         :raises NotImplemented: when not implemented.
         :raises SmartDeviceException: on error
         """
-        raise NotImplementedError("Fails with err_code == 0 with HS110.")
-        """
+        raise NotImplementedError(u"Fails with err_code == 0 with HS110.")
+        u"""
         here just for the sake of completeness.
         if someone figures out why it doesn't work,
         please create a PR :-)
@@ -283,67 +284,67 @@ class SmartDevice(object):
         """
 
     @property
-    def timezone(self) -> Dict:
-        """
+    def timezone(self):
+        u"""
         Returns timezone information
 
         :return: Timezone information
         :rtype: dict
         :raises SmartDeviceException: on error
         """
-        return self._query_helper("time", "get_timezone")
+        return self._query_helper(u"time", u"get_timezone")
 
     @property
-    def hw_info(self) -> Dict:
-        """
+    def hw_info(self):
+        u"""
         Returns information about hardware
 
         :return: Information about hardware
         :rtype: dict
         """
-        keys = ["sw_ver", "hw_ver", "mac", "mic_mac", "type",
-                "mic_type", "hwId", "fwId", "oemId", "dev_name"]
+        keys = [u"sw_ver", u"hw_ver", u"mac", u"mic_mac", u"type",
+                u"mic_type", u"hwId", u"fwId", u"oemId", u"dev_name"]
         info = self.sys_info
-        return {key: info[key] for key in keys if key in info}
+        return dict((key, info[key]) for key in keys if key in info)
 
     @property
-    def location(self) -> Dict:
-        """
+    def location(self):
+        u"""
         Location of the device, as read from sysinfo
 
         :return: latitude and longitude
         :rtype: dict
         """
         info = self.sys_info
-        loc = {"latitude": None,
-               "longitude": None}
+        loc = {u"latitude": None,
+               u"longitude": None}
 
-        if "latitude" in info and "longitude" in info:
-            loc["latitude"] = info["latitude"]
-            loc["longitude"] = info["longitude"]
-        elif "latitude_i" in info and "longitude_i" in info:
-            loc["latitude"] = info["latitude_i"]
-            loc["longitude"] = info["longitude_i"]
+        if u"latitude" in info and u"longitude" in info:
+            loc[u"latitude"] = info[u"latitude"]
+            loc[u"longitude"] = info[u"longitude"]
+        elif u"latitude_i" in info and u"longitude_i" in info:
+            loc[u"latitude"] = info[u"latitude_i"]
+            loc[u"longitude"] = info[u"longitude_i"]
         else:
-            _LOGGER.warning("Unsupported device location.")
+            _LOGGER.warning(u"Unsupported device location.")
 
         return loc
 
     @property
-    def rssi(self) -> Optional[int]:
-        """
+    def rssi(self):
+        u"""
         Returns WiFi signal strenth (rssi)
 
         :return: rssi
         :rtype: int
         """
-        if "rssi" in self.sys_info:
-            return int(self.sys_info["rssi"])
+        if u"rssi" in self.sys_info:
+            return int(self.sys_info[u"rssi"])
         return None
 
     @property
-    def mac(self) -> str:
-        """
+    def mac(self):
+        u"""
         Returns mac address
 
         :return: mac address in hexadecimal with colons, e.g. 01:23:45:67:89:ab
@@ -351,26 +352,26 @@ class SmartDevice(object):
         """
         info = self.sys_info
 
-        if 'mac' in info:
-            return str(info["mac"])
-        elif 'mic_mac' in info:
-            return str(info['mic_mac'])
+        if u'mac' in info:
+            return unicode(info[u"mac"])
+        elif u'mic_mac' in info:
+            return unicode(info[u'mic_mac'])
         else:
-            raise SmartDeviceException("Unknown mac, please submit a bug"
-                                       "with sysinfo output.")
+            raise SmartDeviceException(u"Unknown mac, please submit a bug"
+                                       u"with sysinfo output.")
 
     @mac.setter
-    def mac(self, mac: str) -> None:
-        """
+    def mac(self, mac):
+        u"""
         Sets new mac address
 
         :param str mac: mac in hexadecimal with colons, e.g. 01:23:45:67:89:ab
         :raises SmartDeviceException: on error
         """
-        self._query_helper("system", "set_mac_addr", {"mac": mac})
+        self._query_helper(u"system", u"set_mac_addr", {u"mac": mac})
 
-    def get_emeter_realtime(self) -> Optional[Dict]:
-        """
+    def get_emeter_realtime(self):
+        u"""
         Retrive current energy readings from device.
 
         :returns: current readings or False
@@ -381,12 +382,12 @@ class SmartDevice(object):
         if not self.has_emeter:
             return None
 
-        return self._query_helper(self.emeter_type, "get_realtime")
+        return self._query_helper(self.emeter_type, u"get_realtime")
 
     def get_emeter_daily(self,
-                         year: int = None,
-                         month: int = None) -> Optional[Dict]:
-        """
+                         year=None,
+                         month=None):
+        u"""
         Retrieve daily statistics for a given month
 
         :param year: year for which to retrieve statistics (default: this year)
@@ -405,19 +406,19 @@ class SmartDevice(object):
         if month is None:
             month = datetime.datetime.now().month
 
-        response = self._query_helper(self.emeter_type, "get_daystat",
-                                      {'month': month, 'year': year})
+        response = self._query_helper(self.emeter_type, u"get_daystat",
+                                      {u'month': month, u'year': year})
 
         if self.emeter_units:
-            key = 'energy_wh'
+            key = u'energy_wh'
         else:
-            key = 'energy'
+            key = u'energy'
 
-        return {entry['day']: entry[key]
-                for entry in response['day_list']}
+        return dict((entry[u'day'], entry[key])
+                    for entry in response[u'day_list'])
 
-    def get_emeter_monthly(self, year=None) -> Optional[Dict]:
-        """
+    def get_emeter_monthly(self, year=None):
+        u"""
         Retrieve monthly statistics for a given year.
 
         :param year: year for which to retrieve statistics (default: this year)
@@ -432,19 +433,19 @@ class SmartDevice(object):
         if year is None:
             year = datetime.datetime.now().year
 
-        response = self._query_helper(self.emeter_type, "get_monthstat",
-                                      {'year': year})
+        response = self._query_helper(self.emeter_type, u"get_monthstat",
+                                      {u'year': year})
 
         if self.emeter_units:
-            key = 'energy_wh'
+            key = u'energy_wh'
         else:
-            key = 'energy'
+            key = u'energy'
 
-        return {entry['month']: entry[key]
-                for entry in response['month_list']}
+        return dict((entry[u'month'], entry[key])
+                    for entry in response[u'month_list'])
 
-    def erase_emeter_stats(self) -> bool:
-        """
+    def erase_emeter_stats(self):
+        u"""
         Erase energy meter statistics
 
         :return: True if statistics were deleted
@@ -455,14 +456,14 @@ class SmartDevice(object):
         if not self.has_emeter:
             return False
 
-        self._query_helper(self.emeter_type, "erase_emeter_stat", None)
+        self._query_helper(self.emeter_type, u"erase_emeter_stat", None)
 
         # As query_helper raises exception in case of failure, we have
         # succeeded when we are this far.
         return True
 
-    def current_consumption(self) -> Optional[float]:
-        """
+    def current_consumption(self):
+        u"""
         Get the current power consumption in Watt.
 
         :return: the current power consumption in Watt.
@@ -474,19 +475,26 @@ class SmartDevice(object):
 
         response = self.get_emeter_realtime()
         if self.emeter_units:
-            return float(response['power_mw'])
+            return float(response[u'power_mw'])
         else:
-            return float(response['power'])
+            return float(response[u'power'])
 
-    def turn_off(self) -> None:
-        """
+    def turn_off(self):
+        u"""
         Turns the device off.
         """
-        raise NotImplementedError("Device subclass needs to implement this.")
+        raise NotImplementedError(u"Device subclass needs to implement this.")
+
+
+    def toggle(self):
+        if self.is_off:
+            self.turn_on()
+        else:
+            self.turn_off()
 
     @property
-    def is_off(self) -> bool:
-        """
+    def is_off(self):
+        u"""
         Returns whether device is off.
 
         :return: True if device is off, False otherwise.
@@ -494,34 +502,34 @@ class SmartDevice(object):
         """
         return not self.is_on
 
-    def turn_on(self) -> None:
-        """
+    def turn_on(self):
+        u"""
         Turns the device on.
         """
-        raise NotImplementedError("Device subclass needs to implement this.")
+        raise NotImplementedError(u"Device subclass needs to implement this.")
 
     @property
-    def is_on(self) -> bool:
-        """
+    def is_on(self):
+        u"""
         Returns whether the device is on.
 
         :return: True if the device is on, False otherwise.
         :rtype: bool
         :return:
         """
-        raise NotImplementedError("Device subclass needs to implement this.")
+        raise NotImplementedError(u"Device subclass needs to implement this.")
 
     @property
-    def state_information(self) -> Dict[str, Any]:
-        """
+    def state_information(self):
+        u"""
         Returns device-type specific, end-user friendly state information.
         :return: dict with state information.
         :rtype: dict
         """
-        raise NotImplementedError("Device subclass needs to implement this.")
+        raise NotImplementedError(u"Device subclass needs to implement this.")
 
     def __repr__(self):
-        return "<%s at %s (%s), is_on: %s - dev specific: %s>" % (
+        return u"<%s at %s (%s), is_on: %s - dev specific: %s>" % (
             self.__class__.__name__,
             self.ip_address,
             self.alias,
